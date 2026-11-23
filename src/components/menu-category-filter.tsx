@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { formatEuros } from "@/lib/domain/money";
 import {
+  countByMenuFilter,
   filterGroupsByCategory,
+  formatProductCount,
   MENU_FILTER_LABELS,
   MENU_FILTERS,
   PRODUCT_CATEGORY_LABELS,
@@ -17,6 +19,7 @@ type MenuGroup = { category: ProductCategory; items: MenuProduct[] };
 export function MenuCategoryFilter({ groups }: { groups: MenuGroup[] }) {
   const [filter, setFilter] = useState<MenuFilter>("todas");
   const visibleGroups = filterGroupsByCategory(groups, filter);
+  const counts = countByMenuFilter(groups);
 
   return (
     <>
@@ -27,19 +30,30 @@ export function MenuCategoryFilter({ groups }: { groups: MenuGroup[] }) {
       >
         {MENU_FILTERS.map((option) => {
           const active = option === filter;
+          const label = MENU_FILTER_LABELS[option];
+          const count = counts[option];
           return (
             <button
               key={option}
               type="button"
               aria-pressed={active}
+              aria-label={`${label}, ${formatProductCount(count)}`}
               onClick={() => setFilter(option)}
-              className={`rounded-full border px-4 py-1.5 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 ${
+              className={`inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 ${
                 active
                   ? "border-brand-600 bg-brand-600 text-white hover:bg-brand-700"
                   : "border-stone-300 bg-white text-stone-700 hover:border-brand-500 hover:bg-brand-50"
               }`}
             >
-              {MENU_FILTER_LABELS[option]}
+              <span>{label}</span>
+              <span
+                aria-hidden="true"
+                className={`min-w-6 rounded-full px-1.5 py-0.5 text-center text-xs font-bold tabular-nums ${
+                  active ? "bg-white text-brand-700" : "bg-stone-100 text-stone-700"
+                }`}
+              >
+                {count}
+              </span>
             </button>
           );
         })}

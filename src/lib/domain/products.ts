@@ -46,3 +46,32 @@ export function filterGroupsByCategory<G extends { category: ProductCategory }>(
   if (filter === "todas") return [...groups];
   return groups.filter((group) => group.category === filter);
 }
+
+export function isProductCategory(value: unknown): value is ProductCategory {
+  return typeof value === "string" && (PRODUCT_CATEGORIES as readonly string[]).includes(value);
+}
+
+export function countByMenuFilter(
+  groups: readonly { category: string; items: readonly unknown[] }[],
+): Record<MenuFilter, number> {
+  const counts: Record<MenuFilter, number> = {
+    todas: 0,
+    bocadillos: 0,
+    tapas: 0,
+    bebidas: 0,
+    postres: 0,
+  };
+  for (const group of groups) {
+    if (!isProductCategory(group.category)) continue;
+    counts[group.category] += group.items.length;
+    counts.todas += group.items.length;
+  }
+  return counts;
+}
+
+export function formatProductCount(count: number): string {
+  if (!Number.isInteger(count) || count < 0) {
+    throw new RangeError(`Número de productos inválido: ${count}`);
+  }
+  return `${count} ${count === 1 ? "producto" : "productos"}`;
+}

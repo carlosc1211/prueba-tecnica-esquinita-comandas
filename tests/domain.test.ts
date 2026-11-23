@@ -8,9 +8,12 @@ import {
   ORDER_STATUSES,
 } from "@/lib/domain/orders";
 import {
+  countByMenuFilter,
   filterGroupsByCategory,
+  formatProductCount,
   groupByCategory,
   isMenuFilter,
+  isProductCategory,
   MENU_FILTER_LABELS,
   MENU_FILTERS,
   PRODUCT_CATEGORIES,
@@ -183,6 +186,110 @@ describe("menu filter", () => {
   it("cubre exactamente todas las categorías de producto", () => {
     expect(MENU_FILTERS.slice(1)).toEqual([...PRODUCT_CATEGORIES]);
   });
+});
+
+describe("menu filter counts", () => {
+  const groups = groupByCategory([
+    { id: "1", category: "bocadillos" as const },
+    { id: "2", category: "tapas" as const },
+    { id: "3", category: "bebidas" as const },
+    { id: "4", category: "tapas" as const },
+    { id: "5", category: "postres" as const },
+    { id: "6", category: "bocadillos" as const },
+    { id: "7", category: "tapas" as const },
+  ]);
+
+  it("cuenta los productos de cada categoría", () => {
+    expect(countByMenuFilter(groups)).toEqual({
+      todas: 7,
+      bocadillos: 2,
+      tapas: 3,
+      bebidas: 1,
+      postres: 1,
+    });
+  });
+
+  it("el total de 'todas' es la suma de las categorías", () => {
+    const counts = countByMenuFilter(groups);
+    const sum = PRODUCT_CATEGORIES.reduce((total, category) => total + counts[category], 0);
+    expect(counts.todas).toBe(sum);
+  });
+
+  it("devuelve 0 en las categorías ausentes", () => {
+    const counts = countByMenuFilter(
+      groupByCategory([{ id: "1", category: "tapas" as const }]),
+    );
+    expect(counts).toEqual({ todas: 1, bocadillos: 0, tapas: 1, bebidas: 0, postres: 0 });
+  });
+
+  it("devuelve 0 en todos los filtros con entrada vacía", () => {
+    expect(countByMenuFilter([])).toEqual({
+      todas: 0,
+      bocadillos: 0,
+      tapas: 0,
+      bebidas: 0,
+      postres: 0,
+    });
+  });
+
+  it("acepta grupos con lista de productos vacía", () => {
+    expect(countByMenuFilter([{ category: "bebidas", items: [] }]).bebidas).toBe(0);
+  });
+
+  it("acumula grupos repetidos de la misma categoría", () => {
+    const counts = countByMenuFilter([
+      { category: "tapas", items: [1, 2] },
+      { category: "tapas", items: [3] },
+    ]);
+    expect(counts.tapas).toBe(3);
+    expect(counts.todas).toBe(3);
+  });
+
+  it("devuelve una clave por cada filtro", () => {
+    expect(Object.keys(countByMenuFilter([])).sort()).toEqual([...MENU_FILTERS].sort());
+  });
+
+  it("ignora los grupos con categoría desconocida sin sumarlos a 'todas'", () => {
+    const counts = countByMenuFilter([
+      { category: "tapas", items: [1, 2] },
+      { category: "ensaladas", items: [3, 4, 5] },
+      { category: "", items: [6] },
+      { category: "todas", items: [7] },
+    ]);
+    expect(counts).toEqual({ todas: 2, bocadillos: 0, tapas: 2, bebidas: 0, postres: 0 });
+    expect(Object.keys(counts).sort()).toEqual([...MENU_FILTERS].sort());
+  });
+});
+
+describe("isProductCategory", () => {
+  it.each([...PRODUCT_CATEGORIES])("acepta la categoría válida '%s'", (value) => {
+    expect(isProductCategory(value)).toBe(true);
+  });
+
+  it.each(["todas", "", "Tapas", "postre", "bebidas ", "ensaladas", null, undefined, 1, {}])(
+    "rechaza la categoría inválida %j",
+    (value) => {
+      expect(isProductCategory(value)).toBe(false);
+    },
+  );
+});
+
+describe("formatProductCount", () => {
+  it.each([
+    [0, "0 productos"],
+    [1, "1 producto"],
+    [2, "2 productos"],
+    [12, "12 productos"],
+  ])("formatea %i como '%s'", (count, expected) => {
+    expect(formatProductCount(count)).toBe(expected);
+  });
+
+  it.each([-1, 1.5, Number.NaN, Number.POSITIVE_INFINITY])(
+    "lanza RangeError con el valor inválido %s",
+    (count) => {
+      expect(() => formatProductCount(count)).toThrow(RangeError);
+    },
+  );
 });
 
 describe("time", () => {
