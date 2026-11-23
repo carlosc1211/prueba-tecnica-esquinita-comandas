@@ -30,7 +30,7 @@ Flujo: `Orquestador → Develop → Testing → (RECHAZADO → Develop …) → 
 
 ### 1. Supabase (plan gratuito)
 1. Crea un proyecto en <https://supabase.com>.
-2. **SQL Editor** → ejecuta `supabase/migrations/20261123000000_init.sql` y después `supabase/seed.sql`.
+2. **SQL Editor** → ejecuta en orden todas las migraciones de `supabase/migrations/` (`20261123000000_init.sql` y `20261123000100_grants.sql`) y después `supabase/seed.sql`.
 3. **Authentication → Users → Add user** → crea el usuario de prueba (marca *Auto Confirm User*).
 4. **Authentication → Sign In / Providers** → desactiva *Allow new users to sign up* (solo el personal tiene cuenta).
 5. **Project Settings → API Keys** → copia la URL y la *publishable key*.
