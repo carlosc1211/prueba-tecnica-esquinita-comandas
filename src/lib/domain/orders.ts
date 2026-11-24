@@ -43,8 +43,25 @@ export type PricedLine = {
   unitPriceCents: number;
 };
 
+function isNonNegativeSafeInteger(value: number): boolean {
+  return Number.isSafeInteger(value) && value >= 0;
+}
+
 export function calculateTotalCents(lines: readonly PricedLine[]): number {
-  return lines.reduce((total, line) => total + line.quantity * line.unitPriceCents, 0);
+  let total = 0;
+  for (const { quantity, unitPriceCents } of lines) {
+    if (!isNonNegativeSafeInteger(quantity)) {
+      throw new RangeError(`Cantidad de línea inválida: ${quantity}`);
+    }
+    if (!isNonNegativeSafeInteger(unitPriceCents)) {
+      throw new RangeError(`Precio unitario en céntimos inválido: ${unitPriceCents}`);
+    }
+    total += quantity * unitPriceCents;
+    if (!Number.isSafeInteger(total)) {
+      throw new RangeError("El total de la comanda supera el máximo representable");
+    }
+  }
+  return total;
 }
 
 export type OrderLineInput = {

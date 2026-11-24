@@ -106,6 +106,67 @@ describe("orders", () => {
     expect(calculateTotalCents([])).toBe(0);
   });
 
+  it.each([
+    ["una línea con cantidad 0", [{ quantity: 0, unitPriceCents: 650 }], 0],
+    ["un producto gratis", [{ quantity: 3, unitPriceCents: 0 }], 0],
+    ["el máximo realista 99 × 1000 €", [{ quantity: 99, unitPriceCents: 100000 }], 9900000],
+    [
+      "varias líneas mezclando cantidad 0 y gratis",
+      [
+        { quantity: 1, unitPriceCents: 450 },
+        { quantity: 0, unitPriceCents: 650 },
+        { quantity: 2, unitPriceCents: 0 },
+        { quantity: 4, unitPriceCents: 125 },
+      ],
+      950,
+    ],
+    [
+      "un total exactamente igual a MAX_SAFE_INTEGER",
+      [{ quantity: 1, unitPriceCents: Number.MAX_SAFE_INTEGER }],
+      Number.MAX_SAFE_INTEGER,
+    ],
+  ])("calcula el total con %s", (_label, lines, expected) => {
+    expect(calculateTotalCents(lines)).toBe(expected);
+  });
+
+  it.each([
+    ["cantidad decimal", { quantity: 1.5, unitPriceCents: 650 }],
+    ["cantidad negativa", { quantity: -1, unitPriceCents: 650 }],
+    ["cantidad NaN", { quantity: Number.NaN, unitPriceCents: 650 }],
+    ["cantidad infinita", { quantity: Number.POSITIVE_INFINITY, unitPriceCents: 650 }],
+    ["cantidad no segura", { quantity: Number.MAX_SAFE_INTEGER + 1, unitPriceCents: 1 }],
+    ["precio decimal", { quantity: 1, unitPriceCents: 650.5 }],
+    ["precio negativo", { quantity: 1, unitPriceCents: -650 }],
+    ["precio NaN", { quantity: 1, unitPriceCents: Number.NaN }],
+    ["precio infinito", { quantity: 1, unitPriceCents: Number.POSITIVE_INFINITY }],
+    ["producto que desborda", { quantity: 2, unitPriceCents: Number.MAX_SAFE_INTEGER }],
+  ])("calculateTotalCents lanza RangeError con %s", (_label, line) => {
+    expect(() => calculateTotalCents([line])).toThrow(RangeError);
+  });
+
+  it.each([
+    ["al principio", 0],
+    ["en medio", 1],
+    ["al final", 2],
+  ])("calculateTotalCents lanza RangeError si la línea inválida está %s", (_label, index) => {
+    const lines = [
+      { quantity: 2, unitPriceCents: 650 },
+      { quantity: 3, unitPriceCents: 200 },
+      { quantity: 1, unitPriceCents: 450 },
+    ];
+    lines[index] = { quantity: 1, unitPriceCents: -1 };
+    expect(() => calculateTotalCents(lines)).toThrow(RangeError);
+  });
+
+  it("calculateTotalCents lanza RangeError si la suma de líneas válidas desborda", () => {
+    expect(() =>
+      calculateTotalCents([
+        { quantity: 1, unitPriceCents: Number.MAX_SAFE_INTEGER },
+        { quantity: 1, unitPriceCents: 1 },
+      ]),
+    ).toThrow(RangeError);
+  });
+
   it("fusiona líneas repetidas del mismo producto", () => {
     expect(
       mergeOrderLines([
