@@ -44,9 +44,31 @@ describe("money", () => {
     expect(parseEurosToCents(input)).toBeNull();
   });
 
-  it("formatea en es-ES con euros", () => {
-    expect(formatEuros(650).replace(/\s/g, " ")).toBe("6,50 €");
-    expect(formatEuros(0).replace(/\s/g, " ")).toBe("0,00 €");
+  it.each([
+    [0, "0,00 €"],
+    [1, "0,01 €"],
+    [5, "0,05 €"],
+    [99, "0,99 €"],
+    [100, "1,00 €"],
+    [650, "6,50 €"],
+    // es-ES no agrupa miles en cifras de 4 dígitos (minimumGroupingDigits = 2).
+    [100000, "1000,00 €"],
+    [1234567, "12.345,67 €"],
+  ])("formatea %i céntimos como '%s'", (cents, expected) => {
+    expect(formatEuros(cents).replace(/\s/g, " ")).toBe(expected);
+  });
+
+  it.each([
+    650.5,
+    0.1,
+    -1,
+    -650,
+    Number.NaN,
+    Number.POSITIVE_INFINITY,
+    Number.NEGATIVE_INFINITY,
+    Number.MAX_SAFE_INTEGER + 1,
+  ])("formatEuros lanza RangeError con el importe inválido %s", (cents) => {
+    expect(() => formatEuros(cents)).toThrow(RangeError);
   });
 });
 

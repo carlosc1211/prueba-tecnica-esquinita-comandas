@@ -4,6 +4,9 @@ const formatter = new Intl.NumberFormat("es-ES", {
 });
 
 export function formatEuros(cents: number): string {
+  if (!Number.isSafeInteger(cents) || cents < 0) {
+    throw new RangeError(`Importe en céntimos inválido: ${cents}`);
+  }
   return formatter.format(cents / 100);
 }
 
