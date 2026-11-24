@@ -5,7 +5,7 @@ App de gestión para un bar de bocadillos y tapas en Valencia, construida con un
 - **Pública:** carta en vivo (`/`) y solicitud de reservas (`/reservar`).
 - **Personal (login):** comandas por mesa con flujo de estados (`/panel`), gestión de carta (`/panel/carta`) y reservas (`/panel/reservas`).
 
-**Demo:** `<URL de producción en Vercel>` · **Usuario de prueba:** `<email>` / `<contraseña>`
+**Demo:** https://prueba-tecnica-esquinita-comandas-v.vercel.app/ · **Usuario de prueba:** `prueba@gmail.com` / `123456`
 
 ## Equipo de agentes
 
